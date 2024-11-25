@@ -16,11 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from restaurantapp.views import StaffLoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('restaurantapp.urls')),
-    path('staff/', StaffLoginView.as_view())
+    #path('staff/', StaffLoginView.as_view()),
+    path('api-auth/', include('rest_framework.urls')),
 
 ]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import RestaurantUser, Reservations, Locations, Menu, MenuAvailable
+from .models import * #RestaurantUser, Reservations, Restaurant, Menu, RestaurantStaff
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 
@@ -38,10 +38,10 @@ class RestaurantUserAdmin(UserAdmin):
 
 
 admin.site.register(RestaurantUser, RestaurantUserAdmin)
-
-
 admin.site.register(Reservations)
-
-admin.site.register(Locations)
+admin.site.register(Restaurant)
 admin.site.register(Menu)
-admin.site.register(MenuAvailable)
+admin.site.register(RestaurantStaff)
+admin.site.register(Orders)
+admin.site.register(ItemsOrdered)
+admin.site.register(Bills)

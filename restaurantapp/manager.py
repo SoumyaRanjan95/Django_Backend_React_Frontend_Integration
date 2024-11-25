@@ -9,7 +9,7 @@ class RestaurantUserManager(BaseUserManager):
             raise ValueError("Mobile No is required")
         user = self.model(mobile=mobile,**kwargs)
         user.set_password(password)
-        user.save(using =self._db)
+        user.save(using=self._db)
         return user
     def create_superuser(self, mobile, password, **kwargs):
 

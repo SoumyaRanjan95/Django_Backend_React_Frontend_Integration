@@ -1,66 +1,99 @@
 from rest_framework import serializers
-from .models import RestaurantUser, Reservations, Locations
+from .models import *
 from django.contrib.auth.models import User
 
 
-class LocationsSerializer(serializers.ModelSerializer):
+class RestaurantSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = Locations
-        fields = ['id',"restaurant","city"]
-
-class LocationsSerializerCombined(serializers.ModelSerializer):
-    class Meta:
-        model = Locations
-        fields = ["restaurant","city"]
-
-    def to_representation(self, value):
-        return f'{value.restaurant}, {value.city}'
+        model = Restaurant
+        fields = '__all__'
 
 
-class RestaurantUserSerializer(serializers.ModelSerializer):
+class RestaurantUserCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantUser
-        fields = ["mobile","email","password"]
-        #fields ="__all__"
+        fields= ['mobile','email','fullname','password']
+        #read_only_fields = ['mobile']
 
-class RestaurantUserSerializerMobilenameOnly(serializers.ModelSerializer):
+class RestaurantUserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantUser
-        fields = ["mobile"]
+        fields= '__all__'
+        read_only_fields = ['mobile']
 
-    def to_representation(self, value):
-        return f'{value.mobile}'
+
+    '''
+        For some reasons the create and update methods in the serializer class doesnt hash the password to we use the make_password method in the view itself
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        instance.mobile = validated_data.get('mobile', instance.mobile)
+        instance.email = validated_data.get('email', instance.email)
+        instance.password = validated_data.get('password', instance.password)
+        instance.set_password(instance.password)
+        instance.save()
+        return instance
+    '''
+
 
 
 class ReservationsSerializer(serializers.ModelSerializer):
 
-    def __init__(self,*args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.context['request'].method == 'POST':   # change this to post 'POST'
-            self.fields['name'] = RestaurantUserSerializerMobilenameOnly()
-            self.fields['location'] = LocationsSerializerCombined()
-
     class Meta:
         model = Reservations
-        fields = ["date","guests","name","location",'slot']
-
-    '''def to_representation(self, value):
-
-        value["name"] = RestaurantUser.objects.get(value.name).username
-        value['locations'] = f'{Locations.objects.get(value.location).restaurant}  {Locations.objects.get(value.location).restaurant}'
-
-        return value'''
-
-
-    
-
-
-
+        fields = ['user','reservation_token','slot','guests','reservation_at',"date"]
+        read_only_fields = ['user'] #doesnot show in the form in browsable api
 
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantUser
-        fields = ["mobile","password"]
+        fields = ['mobile',"password"]
+
+class SignUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantUser
+        fields = ['mobile','fullname','email','password']
+
+class MenuSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Menu
+        fields = ['name','type','veg_or_nonveg','price','info','serving_restaurant','available']
+
+class OrdersSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Orders
+        fields=['order_datetime','from_restaurant','item','item_type','veg_or_nonveg','quantity','item_price_from_restaurant','user']
+
+class ItemsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ItemsOrdered
+        fields=['']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

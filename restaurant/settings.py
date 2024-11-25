@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,6 +64,10 @@ CORS_ORIGIN_WHITELIST = (
 
 AUTH_USER_MODEL = "restaurantapp.RestaurantUser"
 AUTHENTICATION_BACKENDS =["django.contrib.auth.backends.ModelBackend"]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.SessionAuthentication',],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated',],}
 
 #'restaurantapp.backends.MobileBackend'
 
