@@ -53,6 +53,22 @@ class RestaurantStaff(models.Model):
     user = models.OneToOneField(RestaurantUser, on_delete=models.CASCADE)
     staff_of_restaurant = models.OneToOneField(Restaurant, on_delete=models.CASCADE)
 
+
+class OrderManager(models.Manager):
+
+    def create_with_items_ordered(self, validated_data, items_ordered):
+        order = Orders.objects.create(**validated_data)
+        order.save()
+        for item in items_ordered:
+            from_restaurant = Restaurant.objects.get(pk=item['from_restaurant'])
+            menu_id = Menu.objects.get(pk=item['menu_id'])
+            user = RestaurantUser.objects.get(pk=item['user'])
+            item_cancelled = item["item_cancelled"]
+            quantity = item['quantity']
+            create_item = ItemsOrdered(order_id=order,from_restaurant=from_restaurant, menu_id=menu_id,user=user,item_cancelled=item_cancelled,quantity=quantity)
+            create_item.save()
+        return order
+
 class Orders(models.Model):
     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_datetime = models.DateTimeField(auto_now=True)
@@ -62,21 +78,22 @@ class Orders(models.Model):
     processed = models.BooleanField(default=False)
     user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
 
+    objects = models.Manager()
+    new_objects = OrderManager()
+
 class ItemsOrdered(models.Model):
 
-    order_id = models.ForeignKey(Orders, on_delete=models.CASCADE)
+    order_id = models.ForeignKey(Orders, on_delete=models.CASCADE, related_name='items_ordered')
     from_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE) 
-    item = models.CharField(max_length=30)
-    item_type = models.CharField(max_length=15)
-    veg_or_nonveg = models.CharField(max_length=15)
-    quantity = models.IntegerField()
-    item_price_from_restaurant = models.IntegerField() 
+    menu_id = models.ForeignKey(Menu,on_delete=models.CASCADE,default=0)
+    quantity= models.PositiveIntegerField(default=1)
+    item_cancelled = models.BooleanField(default=False)
     user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
 
 class Bills(models.Model):
     bill_reference_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False),
     bill_datetime = models.DateTimeField(auto_now=True),
-    order_id = models.ForeignKey(Orders, on_delete=models.CASCADE)
+    order_id = models.OneToOneField(Orders, on_delete=models.CASCADE)
     reservation_token = models.ForeignKey(Reservations,on_delete=models.CASCADE)
     processed = models.BooleanField(default=False)
     from_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE) 

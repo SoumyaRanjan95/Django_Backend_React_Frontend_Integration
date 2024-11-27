@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
 from .models import *
 from django.contrib.auth.models import User
 
@@ -53,9 +54,16 @@ class ReservationsSerializer(serializers.ModelSerializer):
         read_only_fields = ['user'] #doesnot show in the form in browsable api
 
 class LoginSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = RestaurantUser
         fields = ['mobile',"password"]
+
+class RestaurantStaffSerializer(serializers.ModelSerializer):
+    #restaurant = serializers.PrimaryKeyRelatedField()
+    class Meta:
+        model = RestaurantStaff
+        fields = ['user','staff_of_restaurant']
 
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,20 +73,70 @@ class SignUpSerializer(serializers.ModelSerializer):
 class MenuSerializer(serializers.ModelSerializer):
     class Meta:
         model = Menu
-        fields = ['name','type','veg_or_nonveg','price','info','serving_restaurant','available']
+        fields = ['id','name','type','veg_or_nonveg','price','info','serving_restaurant','available']
+class BulkCreateListSerializer(serializers.ListSerializer):
 
-class OrdersSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        items_ordered = validated_data['items_ordered']
+        result = [ItemsOrdered(**item) for item in items_ordered]
 
-    class Meta:
-        model = Orders
-        fields=['order_datetime','from_restaurant','item','item_type','veg_or_nonveg','quantity','item_price_from_restaurant','user']
-
-class ItemsSerializer(serializers.ModelSerializer):
+        try:
+            return ItemsOrdered.objects.bulk_create(result)
+        except IntegrityError as e:
+            raise ValidationError
+        
+class ItemsOrderedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemsOrdered
-        fields=['']
+        fields=['order_id','from_restaurant','menu_id','quantity','item_cancelled','user']
+        #list_serializer_class = BulkCreateListSerializer
 
+class OrdersSerializer(serializers.ModelSerializer):
+
+    """ In order to display the list of items here we take the related name from teh ItemsOrdered model.
+        Then in the field if the related name is shown then it will show us the foreign key,
+        but if we also write a variable with the same related name and give it a Serializer it will serialize the relationship
+    """
+    items_ordered = ItemsOrderedSerializer(many=True,read_only=True)
+
+    def create(self,validated_data):
+        items_ordered = self.context.get('request').data['items_ordered']
+        print(self.context.get('request').data['items_ordered'])
+        return Orders.new_objects.create_with_items_ordered(validated_data, items_ordered)
+
+
+    class Meta:
+        model = Orders
+        fields=['order_id','order_datetime','from_restaurant','reservation_token','table_no','processed','user','items_ordered']
+        #read_only_fields = ['user','processed']
+
+'''class OrdersListSerializer(serializers.HyperlinkedModelSerializer):
+    click_to_process = serializers.HyperlinkedIdentityField(view_name='process_orders_detail')
+    class Meta:
+        model = Orders
+        fields=['order_id','order_datetime','from_restaurant','reservation_token','table_no','processed','user','click_to_process']
+        read_only_fields = ['user']'''
+
+
+
+
+
+class BillsSerializer(serializers.ModelSerializer):
+
+    '''def create(self,validated_data):
+        reservation_token = validated_data.pop('reservation_token')
+        processed= validated_data.pop('processed')
+        order = Orders.objects.get(reservation_token=reservation_token)
+        from_restaurant = order.from_restaurant
+        user = order.user
+        bill = Bills(order_id=order,from_restaurant=from_restaurant,user=user,reservation_token=reservation_token,processed=processed)
+        return bill'''
+
+    class Meta:
+        model = Bills
+        fields =['order_id','reservation_token','processed','from_restaurant','user']
+        read_only_fields = ['from_restaurant','user']
 
 
 

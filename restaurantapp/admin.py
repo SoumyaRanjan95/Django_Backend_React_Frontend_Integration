@@ -4,14 +4,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 
 
-
-
-
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import RestaurantUser
+
+
+class RestaurantAdmin(admin.ModelAdmin):
+    #list_display = ('id','restaurant','city','address')
+    pass
+
 
 
 class RestaurantUserAdmin(UserAdmin):
@@ -39,7 +39,7 @@ class RestaurantUserAdmin(UserAdmin):
 
 admin.site.register(RestaurantUser, RestaurantUserAdmin)
 admin.site.register(Reservations)
-admin.site.register(Restaurant)
+admin.site.register(Restaurant,RestaurantAdmin)
 admin.site.register(Menu)
 admin.site.register(RestaurantStaff)
 admin.site.register(Orders)

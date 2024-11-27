@@ -33,9 +33,21 @@ urlpatterns = [
     path('reservations/<uuid:uuid>/',ReservationsDetailView.as_view(), name='user_reservations_detail'),
 
     path('login/',LoginView.as_view(),name='login'),
+    path('staff_login/',StaffLoginView.as_view(),name='login'),
+    path('logout/',LogoutView.as_view(),name='logout'),
 
-    path('menu/',MenuListView.as_view(),name='menu_list'),
-    path('menu/<int:pk>',MenuDetailView.as_view(),name='menu_list')
+    path('menu/<int:restaurant_pk>/',MenuListView.as_view(),name='menu_list'),
+    path('orders/', UserOrdersView.as_view(), name = 'order_list'),
+
+    
+
+    # For staff
+    path('update/menu/',MenuAvailableUpdateView.as_view(),name='available_menu_update_list'),
+    path('update/menu/<int:pk>/',MenuDetailView.as_view(),name='individual_menu_update'),
+    path('process/orders/', OrdersListForRestaurantView.as_view(), name='process_orders_list'),
+    path('process/orders/<uuid:uuid>/', OrdersDetailForRestaurantView.as_view(), name='process_orders_detail'),
+    path('show_bills/',GenerateBillListView.as_view(), name='show_bill'),
+    path('generate_bills/<uuid:order_id>',GenerateBillDetailView.as_view(), name='generate_bill'),
 
 
     #path('api-token-auth/', obtain_auth_token),

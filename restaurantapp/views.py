@@ -3,7 +3,7 @@ from django.http import JsonResponse, Http404
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView,CreateAPIView
+from rest_framework.generics import GenericAPIView,CreateAPIView, ListCreateAPIView
 from rest_framework import viewsets
 from .models import RestaurantUser, Reservations, Restaurant, Menu
 from rest_framework.decorators import api_view
@@ -24,6 +24,7 @@ from django.core import serializers
 
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from .backends import MobileBackend
+from .permissions import IsRestaurantStaff
 
 
 
@@ -206,18 +207,43 @@ class LoginView(APIView): # Write custom authentication or use the Token/Session
 
     serializer_class = LoginSerializer
     permission_classes =  [permissions.AllowAny]
-    authentication_classes = (SessionAuthentication,)
+    #authentication_classes = (SessionAuthentication,)
 
     def post(self, request, format=None):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = authenticate(mobile=serializer.validated_data["mobile"],password=serializer.validated_data["password"])
-            print(user)
-            if user:
-                login(request, user)            
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+        #serializer = LoginSerializer(data=request.data)
+        #if serializer.is_valid():
+        user = authenticate(mobile=request.data["mobile"],password=request.data["password"])
+        if user:
+            login(request, user)       
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST) 
+
+
+class StaffLoginView(APIView): # Write custom authentication or use the Token/Session authentication
+
+    serializer_class = LoginSerializer
+    permission_classes =  [permissions.AllowAny]
+    #authentication_classes = (SessionAuthentication,)
+
+    def post(self, request, format=None):
+        user = authenticate(mobile=request.data["mobile"],password=request.data["password"])
+        isRestaurantStaffOf = RestaurantStaff.objects.get(user = user).staff_of_restaurant
+        if user.is_staff and isRestaurantStaffOf is not None:
+            login(request, user)      
+            print(isRestaurantStaffOf)      
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)  
+ 
     
+class LogoutView(APIView):
+
+    serializer_classes = None
+
+    def get(self, request):
+        logout(request)
+        request.user = None
+        request.auth = None
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     
 class MenuListView(APIView):
@@ -225,45 +251,72 @@ class MenuListView(APIView):
     serializer_class = MenuSerializer
     permission_classes =  [permissions.IsAuthenticatedOrReadOnly]
 
-    def get(self, request, format=None):
-        menu = Menu.objects.all()
+    def get_object(self, restaurant_pk):
+        restaurant_instance = Restaurant.objects.get(id=restaurant_pk)
+        print(restaurant_instance)
+        return Menu.objects.filter(serving_restaurant=restaurant_instance.id)
+
+    def get(self, request,restaurant_pk, format=None):
+        menu = self.get_object(restaurant_pk)
         serializer = MenuSerializer(menu, many=True)
         return Response(serializer.data)
 
-    def post(self, request, format=None):
+    '''def post(self, request, format=None):
         serializer = MenuSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class MenuDetailView(APIView):
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)'''
+class MenuAvailableUpdateView(APIView):
     serializer_class = MenuSerializer
-    permission_classes =  [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes =  [permissions.IsAdminUser]
     """
     Retrieve, update or delete a snippet instance.
     """
-    def get_object(self, pk):
-        try:
-            return Menu.objects.get(pk=pk)
-        except Menu.DoesNotExist:
-            raise Http404
+    def get_object(self, request):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        return Menu.objects.filter(serving_restaurant=restaurant.id)
 
-    def get(self, request, pk, format=None):
-        menu = self.get_object(pk)
-        serializer = MenuSerializer(menu)
+    def get(self, request, format=None):
+        menu = self.get_object(request)
+        serializer = MenuSerializer(menu,many=True)
         return Response(serializer.data)
 
-    def put(self, request, pk, format=None):
-        menu = self.get_object(pk)
+    def put(self, request, format=None):
+        menu = self.get_object(request)
         serializer = MenuSerializer(menu, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class MenuDetailView(APIView):
+    serializer_class = MenuSerializer
+    permission_classes =  [permissions.IsAdminUser]
+    """
+    Retrieve, update or delete a snippet instance.
+    """
+    def get_object(self,request,pk):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        return Menu.objects.get(id=pk,serving_restaurant=restaurant.id)
+
+    def get(self, request, pk, format=None):
+        menu = self.get_object(request,pk)
+        serializer = MenuSerializer(menu)
+        return Response(serializer.data)
+
+    def patch(self, request, pk, format=None):
+        menu = self.get_object(request,pk)
+        serializer = MenuSerializer(menu, data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, pk, format=None):
-        menu = self.get_object(pk)
+        menu = self.get_object(request,pk)
         menu.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -271,43 +324,86 @@ class MenuDetailView(APIView):
 
 
     
-class OrdersListViewUser(APIView):
+class UserOrdersView(APIView):
+    serializer_class = OrdersSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, request):
         instance = RestaurantUser.objects.get(mobile=request.user)
         return Orders.objects.filter(user=instance.id)
     def get(self, request, format=None):
-        menu = self.get_object(request)
-        serializer = MenuSerializer(menu, many=True)
+        order = self.get_object(request)
+        serializer = OrdersSerializer(order, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = MenuSerializer(data=request.data)
+        serializer = OrdersSerializer(data=request.data, context = {"request":request})
+        if serializer.is_valid():
+            instance = Restaurant.objects.get(id = serializer.validated_data['from_restaurant'].id)
+            reservation_exists = Reservations.objects.filter(reservation_token=serializer.validated_data['reservation_token'].reservation_token,reservation_at=instance.id).exists()
+            if reservation_exists:
+                serializer.validated_data["user"] = RestaurantUser.objects.get(mobile=request.user) # self populate
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, format=None):
+        order = self.get_object(request)
+        order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class OrdersListForRestaurantView(APIView):
+    serializer_class = OrdersSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_object(self,request):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        return Orders.objects.filter(from_restaurant=restaurant.id)
+
+    def get(self, request, format=None):
+        orders = self.get_object(request)
+        serializer = OrdersSerializer(orders,many=True) #context={'request': request} 
+        return Response(serializer.data)
+    
+
+class OrdersDetailForRestaurantView(APIView):
+    serializer_class = OrdersSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_object(self,request,uuid):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        return Orders.objects.get(from_restaurant=restaurant.id,order_id=uuid)
+
+    def get(self, request,uuid ,format=None):
+        orders = self.get_object(request,uuid)
+        serializer = OrdersSerializer(orders)
+        return Response(serializer.data)
+
+
+    def patch(self, request,uuid, format=None):
+        order = self.get_object(request,uuid)
+        serializer = OrdersSerializer(order, data=request.data,partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, format=None):
-        menu = self.get_object(request)
-        menu.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
-class OrdersListViewRestaurant(APIView):
+class ItemsOrderedSerializer(ListCreateAPIView):
 
-    # serializer_class = [''] write a custom serializer class for the Restaurant User
+    serializer_class = ItemsOrderedSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-    def get_object(self,request):
-        instance = RestaurantUser.objects.get(mobile=request.user)
-        return Orders.objects.filter()
 
-    def get(self, request, format=None):
-        menu = Menu.objects.all()
-        serializer = MenuSerializer(menu, many=True)
-        return Response(serializer.data)
+    def get(self,request, format=None):
+        item = ItemsOrdered.objects.all()
+        serializer = ItemsOrderedSerializer(item, many=True)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
-    def patch(self, request, format=None):
-        serializer = MenuSerializer(data=request.data)
+    def post(self, request, format=None):
+        serializer = ItemsOrderedSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -315,9 +411,47 @@ class OrdersListViewRestaurant(APIView):
 
 
 
+class GenerateBillListView(APIView):
+
+    serializer_class = BillsSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_object(self,request):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        return Bills.objects.filter(from_restaurant=restaurant.id)
+
+    def get(self,request, format=None):
+        bills = self.get_object(request)
+        serializer = BillsSerializer(bills, many=True)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+    
+
+class GenerateBillDetailView(APIView):
+
+    serializer_class = BillsSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_object(self,request,order_id):
+        instance = RestaurantUser.objects.get(mobile=request.user)
+        restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
+        order=Orders.objects.get(order_id=order_id)
+        return Bills.objects.get(order_id=order)
+    
+    def get(self,request,order_id):
+        bill = self.get_object(request,order_id)
+        serializer = BillsSerializer(bill)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
 
-
+    def patch(self, request,order_id, format=None):
+        bills = self.get_object(request,order_id)
+        serializer = BillsSerializer(bills,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
