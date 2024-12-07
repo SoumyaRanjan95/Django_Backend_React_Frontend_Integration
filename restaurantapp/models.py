@@ -1,7 +1,21 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import User, AbstractUser, BaseUserManager, UserManager
 from .manager import RestaurantUserManager
 import uuid
+
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
+
+
+
 
 class RestaurantUser(AbstractUser):
     username = None
@@ -22,9 +36,10 @@ class Reservations(models.Model):
     reservation_token = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE, default="")
     date = models.DateField()
-    slot = models.TimeField()
+    slot = models.CharField(max_length=9)
     guests = models.IntegerField()
     reservation_at = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    created = models.DateTimeField(default=timezone.now())
 
 
 class Menu(models.Model):
@@ -59,14 +74,14 @@ class OrderManager(models.Manager):
     def create_with_items_ordered(self, validated_data, items_ordered):
         order = Orders.objects.create(**validated_data)
         order.save()
+        user = RestaurantUser.objects.get(mobile=validated_data['user'])
         for item in items_ordered:
-            from_restaurant = Restaurant.objects.get(pk=item['from_restaurant'])
-            menu_id = Menu.objects.get(pk=item['menu_id'])
-            user = RestaurantUser.objects.get(pk=item['user'])
+            from_restaurant = Restaurant.objects.get(pk=item['from_restaurant'].id)
+            menu_id = Menu.objects.get(pk=item['menu_id'].id)
             item_cancelled = item["item_cancelled"]
             quantity = item['quantity']
             create_item = ItemsOrdered(order_id=order,from_restaurant=from_restaurant, menu_id=menu_id,user=user,item_cancelled=item_cancelled,quantity=quantity)
-            create_item.save()
+            create_item.save(force_insert=True)
         return order
 
 class Orders(models.Model):
@@ -100,8 +115,13 @@ class Bills(models.Model):
     user = models.ForeignKey(RestaurantUser, on_delete=models.CASCADE)
 
 
-
+@receiver(post_save, sender=Orders)
+def create_bill(sender, instance=None, created=False, **kwargs):
+    if created:
+        Bills.objects.create(order_id=instance,reservation_token=instance.reservation_token,from_restaurant=instance.from_restaurant,user=instance.user)
 
 '''class Orders(models.Model):
     reservations= models.ForeignKey(Reservations, on_delete=models.CASCADE)
     orders = models.ManyToManyField(MenuAvailable)'''
+
+

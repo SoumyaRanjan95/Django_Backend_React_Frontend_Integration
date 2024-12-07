@@ -21,14 +21,27 @@ from rest_framework import permissions
 from django.utils.decorators import method_decorator
 from django.contrib.auth import login, logout, authenticate
 from django.core import serializers
-
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+
 from .backends import MobileBackend
 from .permissions import IsRestaurantStaff
 
 
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class GetCSRFToken(APIView):
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, format=None):
+        return Response ({ "success": "CSRF cookie set"})
+
+
 class RestaurantListView(APIView):
+
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
         restaurant = Restaurant.objects.all()
@@ -141,6 +154,7 @@ class ReservationsListView(APIView):
 
     serializer_class = ReservationsSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = (TokenAuthentication,SessionAuthentication)
 
     def get_object(self, request):
         try:
@@ -152,10 +166,9 @@ class ReservationsListView(APIView):
     def get(self, request,format=None):
         reservations = self.get_object(request)
         serializer = ReservationsSerializer(reservations, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request,format=None):
-        print(request.data)
         serializer = ReservationsSerializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data["user"] = RestaurantUser.objects.get(mobile=request.user) # self populate
@@ -166,12 +179,15 @@ class ReservationsListView(APIView):
             '''
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservationsDetailView(APIView):
 
     serializer_class = ReservationsSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = (TokenAuthentication,SessionAuthentication)
     """
     Retrieve, update or delete a snippet instance.
     """
@@ -196,12 +212,11 @@ class ReservationsDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, format=None):
-        reservations = self.get_object(request)
+    def delete(self, request, uuid,format=None):
+        reservations = self.get_object(request,uuid)
         reservations.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-
 
 class LoginView(APIView): # Write custom authentication or use the Token/Session authentication
 
@@ -214,8 +229,16 @@ class LoginView(APIView): # Write custom authentication or use the Token/Session
         #if serializer.is_valid():
         user = authenticate(mobile=request.data["mobile"],password=request.data["password"])
         if user:
-            login(request, user)       
-            return Response(status=status.HTTP_200_OK)
+            login(request, user)
+            serializer=RestaurantUserDetailSerializer(user)      
+            token, created = Token.objects.get_or_create(user=user)   
+            '''response = Response()       
+            response.data = serializer.data
+            response.set_cookie(key='token',value=token.key,httponly=True)
+            response['status'] =status.HTTP_200_OK
+            print(response)'''
+            return Response({**serializer.data,'token': token.key},status=status.HTTP_200_OK)
+            #return response
         return Response(status=status.HTTP_400_BAD_REQUEST) 
 
 
@@ -230,19 +253,21 @@ class StaffLoginView(APIView): # Write custom authentication or use the Token/Se
         isRestaurantStaffOf = RestaurantStaff.objects.get(user = user).staff_of_restaurant
         if user.is_staff and isRestaurantStaffOf is not None:
             login(request, user)      
+            token, created = Token.objects.get_or_create(user=user)  
+            print(type(user)) 
             print(isRestaurantStaffOf)      
-            return Response(status=status.HTTP_200_OK)
+            return Response({'user':user.mobile,'restaurant_id':isRestaurantStaffOf.id,'staff_of_restaurant':isRestaurantStaffOf.restaurant,'token': token.key },status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)  
  
     
 class LogoutView(APIView):
 
     serializer_classes = None
+    permission_classes =  [permissions.IsAuthenticated]
+    authentication_classes = (TokenAuthentication,)
 
     def get(self, request):
         logout(request)
-        request.user = None
-        request.auth = None
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     
@@ -253,7 +278,6 @@ class MenuListView(APIView):
 
     def get_object(self, restaurant_pk):
         restaurant_instance = Restaurant.objects.get(id=restaurant_pk)
-        print(restaurant_instance)
         return Menu.objects.filter(serving_restaurant=restaurant_instance.id)
 
     def get(self, request,restaurant_pk, format=None):
@@ -283,9 +307,9 @@ class MenuAvailableUpdateView(APIView):
         serializer = MenuSerializer(menu,many=True)
         return Response(serializer.data)
 
-    def put(self, request, format=None):
+    def patch(self, request, format=None):
         menu = self.get_object(request)
-        serializer = MenuSerializer(menu, data=request.data)
+        serializer = MenuListUpdateSerializer(menu, data=request.data,partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -327,6 +351,7 @@ class MenuDetailView(APIView):
 class UserOrdersView(APIView):
     serializer_class = OrdersSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication,SessionAuthentication]
 
     def get_object(self, request):
         instance = RestaurantUser.objects.get(mobile=request.user)
@@ -337,7 +362,7 @@ class UserOrdersView(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = OrdersSerializer(data=request.data, context = {"request":request})
+        serializer = OrdersPOSTSerializer(data=request.data, context = {"request":request})
         if serializer.is_valid():
             instance = Restaurant.objects.get(id = serializer.validated_data['from_restaurant'].id)
             reservation_exists = Reservations.objects.filter(reservation_token=serializer.validated_data['reservation_token'].reservation_token,reservation_at=instance.id).exists()
@@ -345,7 +370,9 @@ class UserOrdersView(APIView):
                 serializer.validated_data["user"] = RestaurantUser.objects.get(mobile=request.user) # self populate
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(serializer.errors)
+        return Response({"message":"The reservation token might be invalid"}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, format=None):
         order = self.get_object(request)
@@ -387,7 +414,7 @@ class OrdersDetailForRestaurantView(APIView):
         serializer = OrdersSerializer(order, data=request.data,partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -411,7 +438,10 @@ class ItemsOrderedSerializer(ListCreateAPIView):
 
 
 
-class GenerateBillListView(APIView):
+
+    
+
+class BillListsView(APIView):
 
     serializer_class = BillsSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -419,35 +449,31 @@ class GenerateBillListView(APIView):
     def get_object(self,request):
         instance = RestaurantUser.objects.get(mobile=request.user)
         restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
-        return Bills.objects.filter(from_restaurant=restaurant.id)
-
-    def get(self,request, format=None):
-        bills = self.get_object(request)
-        serializer = BillsSerializer(bills, many=True)
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
-
+        bills=Bills.objects.filter(from_restaurant=restaurant.id)
+        return bills
     
-
-class GenerateBillDetailView(APIView):
-
+    def get(self,request):
+        bills = self.get_object(request)
+        print("inside bill get")
+        print(bills)
+        serializer = BillsSerializer(bills,many=True)
+        print('After bill get')
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        #return Response(serializer.data,status=status.HTTP_201_CREATED)
+        
+class ProcessBillsView(APIView):
     serializer_class = BillsSerializer
     permission_classes = [permissions.IsAdminUser]
 
-    def get_object(self,request,order_id):
-        instance = RestaurantUser.objects.get(mobile=request.user)
+    def get_objects(self, request, order_id):
+        instance  = RestaurantUser.objects.get(mobile = request.user)
         restaurant = RestaurantStaff.objects.get(user = instance.id).staff_of_restaurant
-        order=Orders.objects.get(order_id=order_id)
-        return Bills.objects.get(order_id=order)
+        bill=Bills.objects.get(from_restaurant=restaurant.id, order_id=order_id)
+        return bill
     
-    def get(self,request,order_id):
-        bill = self.get_object(request,order_id)
-        serializer = BillsSerializer(bill)
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
-
-
     def patch(self, request,order_id, format=None):
-        bills = self.get_object(request,order_id)
-        serializer = BillsSerializer(bills,data=request.data,partial=True)
+        bill = self.get_objects(request, order_id)
+        serializer = BillsSerializer(bill,data=request.data,partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

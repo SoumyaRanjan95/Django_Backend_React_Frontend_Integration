@@ -2,8 +2,6 @@ from django.contrib import admin
 from .models import * #RestaurantUser, Reservations, Restaurant, Menu, RestaurantStaff
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-
-
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import RestaurantUser
 
@@ -37,11 +35,20 @@ class RestaurantUserAdmin(UserAdmin):
     ordering = ("mobile",)
 
 
+class OrdersAdmin(admin.ModelAdmin):
+    list_display = ('order_id','order_datetime')
+    ordering = ("order_datetime",)
+
+
+class ReservationsAdmin(admin.ModelAdmin):
+    list_display = ('reservation_token','user','created')
+    ordering = ("created",)
+
 admin.site.register(RestaurantUser, RestaurantUserAdmin)
-admin.site.register(Reservations)
+admin.site.register(Reservations,ReservationsAdmin)
 admin.site.register(Restaurant,RestaurantAdmin)
 admin.site.register(Menu)
 admin.site.register(RestaurantStaff)
-admin.site.register(Orders)
+admin.site.register(Orders, OrdersAdmin)
 admin.site.register(ItemsOrdered)
 admin.site.register(Bills)
