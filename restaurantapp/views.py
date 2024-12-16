@@ -37,6 +37,16 @@ class GetCSRFToken(APIView):
 
     def get(self, request, format=None):
         return Response ({ "success": "CSRF cookie set"})
+    
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class IsAuthenticatedView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = (TokenAuthentication,SessionAuthentication)
+
+    def get(self, request):
+        user = RestaurantUser.objects.get(mobile=request.user)
+        return Response({"is_authenticated":user.is_authenticated,'mobile':user.mobile,'fullname':user.fullname})
+
 
 
 class RestaurantListView(APIView):
@@ -253,9 +263,7 @@ class StaffLoginView(APIView): # Write custom authentication or use the Token/Se
         isRestaurantStaffOf = RestaurantStaff.objects.get(user = user).staff_of_restaurant
         if user.is_staff and isRestaurantStaffOf is not None:
             login(request, user)      
-            token, created = Token.objects.get_or_create(user=user)  
-            print(type(user)) 
-            print(isRestaurantStaffOf)      
+            token, created = Token.objects.get_or_create(user=user)      
             return Response({'user':user.mobile,'restaurant_id':isRestaurantStaffOf.id,'staff_of_restaurant':isRestaurantStaffOf.restaurant,'token': token.key },status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)  
  
@@ -479,6 +487,15 @@ class ProcessBillsView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class StaffIsAuthenticatedView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    authentication_classes = (TokenAuthentication,SessionAuthentication)
+
+    def get(self, request):
+        user = RestaurantUser.objects.get(mobile=request.user)
+        isRestaurantStaffOf = RestaurantStaff.objects.get(user = user).staff_of_restaurant
+        return Response({"is_authenticated":user.is_authenticated,'user':user.mobile,'restaurant_id':isRestaurantStaffOf.id,'staff_of_restaurant':isRestaurantStaffOf.restaurant},status=status.HTTP_200_OK)
 
 
 

@@ -22,7 +22,7 @@ router.register(r'locations', RestaurantViewSet,basename='locations')
 
 
 urlpatterns = [
-
+    path('is_authenticated/',IsAuthenticatedView.as_view(),name="authenticated"),
     path('csrf/',GetCSRFToken.as_view(),name="csrf_token"),
     path('register/', RestaurantUserCreationView.as_view(),name='restaurant_user_creation'),
     path('restaurantuser/',RestaurantUserDetailView.as_view(), name='restaurant_user_detail'), # we are filtering aganist the request.user
@@ -43,6 +43,7 @@ urlpatterns = [
 
     # For staff
     path('staff_login/',StaffLoginView.as_view(),name='staff_login'),
+    path('staff_is_authenticated/',StaffIsAuthenticatedView.as_view(),name="authenticated"),
     path('update/menu/',MenuAvailableUpdateView.as_view(),name='available_menu_update_list'),
     path('update/menu/<int:pk>/',MenuDetailView.as_view(),name='individual_menu_update'),
     path('process/orders/', OrdersListForRestaurantView.as_view(), name='process_orders_list'),
