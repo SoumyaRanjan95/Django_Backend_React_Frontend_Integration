@@ -1,0 +1,137 @@
+:root{
+  --bg-color: rgb(234, 225, 219);
+  --bg-color-darker1: rgb(244, 197, 166);
+  --bg-color-darker: rgb(234, 214, 199);
+  --bg-color-lighter:whitesmoke;
+
+  --border-color: var(--bg-color);
+
+
+  --whitesmoke: whitesmoke;
+  --white: white;
+
+  --box-shadow:black;
+
+  --color-foreground: black;
+  --links-hover: rebeccapurple;
+
+  --dropdown-bckgrnd-color: white;
+  --dropdown-foreground-color: black;
+  --dropdown-search-color: black;
+  --search-restaurant-background-color: white;
+  --services-background-color: var(--whitesmoke);
+  --services-foreground-color:var(--color-foreground);
+
+  --reservetable-background: var(--whitesmoke);
+  --reservetable-foreground: black;
+  --reservetable-border: black;
+
+  --menu-background: var(--whitesmoke);
+  --menu-foreground: black;
+
+  --toast-background: white;
+  --toast-foreground: black;
+
+}
+/*
+  --bg-color: rgb(234, 225, 219);
+  --bg-color-darker1: rgb(244, 197, 166);
+  --bg-color-darker: rgb(234, 214, 199);
+*/
+
+[data-theme="dark"] {
+  --bg-color: #333;
+  --bg-color-darker: black;
+  --bg-color-lighter:#626262;
+
+  --whitesmoke: whitesmoke;
+  --white: white;
+  --border-color: var(--white);
+
+
+  --color-foreground: whitesmoke;
+  --links-hover: rebeccapurple;
+  --dropdown-bckgrnd-color: grey;
+  --dropdown-foreground-color: whitesmoke;
+
+  --dropdown-search-color: var(--whitesmoke);
+  --box-shadow:white;
+  --search-restaurant-background-color: var(--bg-color-darker);
+  --services-background-color:var(--bg-color);
+  --services-foreground-color:var(--color-foreground);
+
+  --reservetable-background: var(--bg-color);
+  --reservetable-foreground: var(--color-foreground);
+  --reservetable-border: var(var(--color-foreground));
+
+  --menu-background: var(--bg-color);
+  --menu-foreground: var(--color-foreground);
+
+  --toast-background: var(--bg-color);
+  --toast-foreground: var(--color-foreground);
+
+
+}
+
+.whitemode{
+  color: white;
+}
+.toggle-theme-wrapper{
+ display: flex;
+ flex-direction: row;
+ align-items: center; 
+ gap: 3px;
+}
+.toggle-theme{
+  position: relative;
+  display: inline-block;
+  height: 20px;
+  width: 35px;
+}
+
+.toggle-theme input{
+  display: none;
+}
+
+.slider{
+  background-color: #ccc;
+  position: absolute;
+  cursor: pointer;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  transition: 0.2s;
+}
+
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 12px;
+  left: 4px;
+  position: absolute;
+  transition: 0.4s;
+  width: 12px;
+}
+
+input:checked + .slider:before {
+  transform: translateX(15px);
+}
+
+input:checked + .slider {
+  background-color: black;
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+@import url('App_mob.css');
+@import url('App_desktop.css');
