@@ -257,30 +257,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    animation: login_show 4s ease-in-out forwards;
    }
 .login-dismissed{
-    animation: login_dismiss 4s ease-in-out forwards;
 }
-   @keyframes login_show {
-    0%{
-        opacity: 0;
-    }
-    100%{
-        opacity: 1;
 
-    }
-   }
-   @keyframes login_dismiss {
-    0%{
-        opacity: 1;
-
-    }
-    100%{
-        opacity: 0;
-
-    }
-   }
   
   .LoginModal-top{
     width: 100%;

@@ -24,6 +24,13 @@ class RestaurantUserCreationSerializer(serializers.ModelSerializer):
         # These fields are only editable (not displayed) and have to be a part of 'fields' tuple
         extra_kwargs = {'password': {'write_only': True}}
 
+    def create(self, validated_data):
+        user = RestaurantUser.objects.create_user(validated_data['mobile'],validated_data['password'])
+        user.fullname = validated_data['fullname']
+        user.email = validated_data['email']
+        user.save()
+        return user
+
 class RestaurantUserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantUser
@@ -180,7 +187,7 @@ class ItemsOrderedPOSTSerializer(serializers.ModelSerializer):
 
 class OrdersPOSTSerializer(serializers.ModelSerializer):
 
-    """ In order to display the list of items here we take the related name from teh ItemsOrdered model.
+    """ In order to display the list of items here we take the related name from the ItemsOrdered model.
         Then in the field if the related name is shown then it will show us the foreign key,
         but if we also write a variable with the same related name and give it a Serializer it will serialize the relationship
     """

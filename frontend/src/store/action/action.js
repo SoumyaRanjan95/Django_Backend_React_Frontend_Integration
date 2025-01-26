@@ -76,7 +76,6 @@ export const register = (dispatch, toast) => async (signUpData) => {
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              "X-CSRFToken": Cookies.get('csrftoken'), 
             },
             body: JSON.stringify(signUpData)
           });
@@ -91,6 +90,7 @@ export const register = (dispatch, toast) => async (signUpData) => {
       dispatch({ type: 'REGSITER_FAILURE', payload: response.error });
     }
   } catch (error) {
+    console.log(error)
     dispatch({ type: 'REGSITER_FAILURE', payload: error.message });
     toast.success('Registration Failed ...')
 
@@ -414,7 +414,7 @@ export const processorders = (dispatch) => async (uuid) => {
 
 }
 
-export const updaterestaurantmenu = (dispatch) => async (menulist) => {
+export const updaterestaurantmenu = (dispatch, toast) => async (menulist) => {
   try{
     const URL = `${process.env.REACT_APP_API_URL}/api/update/menu/`
     const response = await fetch(URL,{
@@ -431,6 +431,7 @@ export const updaterestaurantmenu = (dispatch) => async (menulist) => {
     if(status == 200){
       const updatedRestaurantMenuAction = getrestaurantmenu(dispatch)
       updatedRestaurantMenuAction()
+      toast.success("Menu Successdully updated...")
     }
     console.log(status)
   }catch(error){

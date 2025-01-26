@@ -1,74 +1,171 @@
-/*! js-cookie v3.0.5 | MIT */
+/*!********************!*\
+  !*** ./src/App.js ***!
+  \********************/
 
-/**
- * @license React
- * react-dom.production.min.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
 
-/**
- * @license React
- * react-jsx-runtime.production.min.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+/*!****************************!*\
+  !*** ./src/store/index.js ***!
+  \****************************/
 
-/**
- * @license React
- * react.production.min.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+/*!*******************************!*\
+  !*** ./src/hooks/useToast.js ***!
+  \*******************************/
 
-/**
- * @license React
- * scheduler.production.min.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+/*!********************************!*\
+  !*** ./src/components/Cart.js ***!
+  \********************************/
 
-/**
- * @remix-run/router v1.20.0
- *
- * Copyright (c) Remix Software Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE.md file in the root directory of this source tree.
- *
- * @license MIT
- */
+/*!********************************!*\
+  !*** ./src/components/Data.js ***!
+  \********************************/
 
-/**
- * React Router DOM v6.27.0
- *
- * Copyright (c) Remix Software Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE.md file in the root directory of this source tree.
- *
- * @license MIT
- */
+/*!********************************!*\
+  !*** ./src/components/Home.js ***!
+  \********************************/
 
-/**
- * React Router v6.27.0
- *
- * Copyright (c) Remix Software Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE.md file in the root directory of this source tree.
- *
- * @license MIT
- */
+/*!********************************!*\
+  !*** ./src/reportWebVitals.js ***!
+  \********************************/
+
+/*!*********************************!*\
+  !*** ./src/components/Order.js ***!
+  \*********************************/
+
+/*!*********************************!*\
+  !*** ./src/components/Staff.js ***!
+  \*********************************/
+
+/*!*********************************!*\
+  !*** ./src/components/Toast.js ***!
+  \*********************************/
+
+/*!**********************************!*\
+  !*** ./src/components/Footer.js ***!
+  \**********************************/
+
+/*!**********************************!*\
+  !*** ./src/components/Logout.js ***!
+  \**********************************/
+
+/*!**********************************!*\
+  !*** ./src/components/Search.js ***!
+  \**********************************/
+
+/*!************************************!*\
+  !*** ./src/components/DropDown.js ***!
+  \************************************/
+
+/*!************************************!*\
+  !*** ./src/store/action/action.js ***!
+  \************************************/
+
+/*!*************************************!*\
+  !*** ./node_modules/react/index.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./src/components/DarkTheme.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./src/components/OrderPage.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./src/components/SidePanel.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./src/components/UserLogin.js ***!
+  \*************************************/
+
+/*!**************************************!*\
+  !*** ./src/components/Breadcrumb.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./src/contexts/ToastContext.js ***!
+  \**************************************/
+
+/*!***************************************!*\
+  !*** ./src/components/SignUpModal.js ***!
+  \***************************************/
+
+/*!****************************************!*\
+  !*** ./src/components/Reservations.js ***!
+  \****************************************/
+
+/*!****************************************!*\
+  !*** ./src/components/ReserveTable.js ***!
+  \****************************************/
+
+/*!****************************************!*\
+  !*** ./src/store/reducers/reducers.js ***!
+  \****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/react-dom/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/scheduler/index.js ***!
+  \*****************************************/
+
+/*!******************************************!*\
+  !*** ./src/components/StaffDashboard.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./src/components/ToastContainer.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./src/components/UserLoginModal.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./src/store/constants/constants.js ***!
+  \******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/react/jsx-runtime.js ***!
+  \*******************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/react-router/dist/index.js ***!
+  \*************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/js-cookie/dist/js.cookie.mjs ***!
+  \***************************************************/
+
+/*!****************************************************!*\
+  !*** ./src/components/SignInSignUpModalbckgrnd.js ***!
+  \****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/react-router-dom/dist/index.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/react/cjs/react.development.js ***!
+  \*****************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/@remix-run/router/dist/router.js ***!
+  \*******************************************************/
+
+/*!*************************************************************!*\
+  !*** ./node_modules/react-dom/cjs/react-dom.development.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./node_modules/scheduler/cjs/scheduler.development.js ***!
+  \*************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./node_modules/react/cjs/react-jsx-runtime.development.js ***!
+  \*****************************************************************/

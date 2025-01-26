@@ -53,12 +53,12 @@ class RestaurantListView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, format=None):
+    def get(self, request, format=None): # Get the list of all the restaurants
         restaurant = Restaurant.objects.all()
         serializer = RestaurantSerializer(restaurant, many=True)
         return Response(serializer.data)
 
-    def post(self, request, format=None):
+    def post(self, request, format=None): # Add a restaurant
         serializer = RestaurantSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -66,9 +66,6 @@ class RestaurantListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RestaurantDetailView(APIView):
-    """
-    Retrieve, update or delete a snippet instance.
-    """
     def get_object(self, pk):
         try:
             return Restaurant.objects.get(pk=pk)
@@ -97,36 +94,22 @@ class RestaurantDetailView(APIView):
 class RestaurantUserCreationView(APIView):
     serializer_class = RestaurantUserCreationSerializer
     permission_classes = [permissions.AllowAny]
-
-    """
-        USe this View for Signing Up
-    """
-    """ See Django Rest FrameWork Docs  --- serializers"""
-    
-    '''
-        .save() will create a new instance.
-        serializer = CommentSerializer(data=data) # this feature is copied in POST below for CREATE
-    '''
-    
     
     def post(self, request, format=None):
         serializer = RestaurantUserCreationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.validated_data["password"] = make_password(serializer.validated_data["password"]) # serializer create and update not hasing passwords
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     
 
-class RestaurantUserDetailView(APIView):   # we can also use the  Retrieve API for the read-only behaviour and Update APIview for update endpoints
+class RestaurantUserDetailView(APIView):
 
     serializer_class = RestaurantUserDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    """
-    Retrieve, update or delete a snippet instance.
-    """
+
     def get_object(self, request):
         try:
             return RestaurantUser.objects.get(mobile=request.user)
@@ -198,9 +181,6 @@ class ReservationsDetailView(APIView):
     serializer_class = ReservationsSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = (TokenAuthentication,SessionAuthentication)
-    """
-    Retrieve, update or delete a snippet instance.
-    """
     def get_object(self, request, uuid):
         try:
             instance = RestaurantUser.objects.get(mobile=request.user)

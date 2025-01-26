@@ -61,7 +61,7 @@ function StaffDashboard(){
     }
 
     const handleLogout = async () => {
-        const logoutAction = stafflogout(staffAuthDispatch, toast)
+        const logoutAction = stafflogout(staffAuthDispatch)
         logoutAction();
         navigate('/staff/')
         
@@ -101,7 +101,7 @@ function StaffDashboard(){
         const handleUpdateRestaurantMenu = (e) => {
             e.preventDefault()
             console.log(foodDataState)
-            const updaterestaurantmenuAction = updaterestaurantmenu(staffAuthDispatch)
+            const updaterestaurantmenuAction = updaterestaurantmenu(staffAuthDispatch, toast)
             updaterestaurantmenuAction(foodDataState)
 
 

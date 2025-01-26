@@ -4,28 +4,32 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from .views import *
-#from .views import CustomAuthToken, LocationsViewSet, RestaurantUserViewSet, ReservationsViewSet
-
-"""urlpatterns = [
-    path("", views.index, name="index"),
-]"""
 
 
-'''router = routers.DefaultRouter()
-#router.register(r'users', RestaurantUserViewSet,basename='restaurantuser')
-router.register(r'locations', RestaurantViewSet,basename='locations')
-#router.register(r'reservations', ReservationsViewSet, basename='reservations')'''
+"""
 
+URLs for accessing the API For Regular User (to be used in react Frontend
+api/is_authenticated/ - to check if the user is authenticated
+api/csrf/ - to obtain the csrf token
+api/regsiter/ - register a user 
+api/restaurantuser/ - get the details about the currently logged in user
+api/restaurants/ - get the list of restaurants
+api/restaurants/pk/ - details about the restaurant
+api/reservations/ - get the list of the user reservations
+api/reservations/ - get the details of the user reservations
+api/reservations/ - login a user
+api/logout/ - logout a user
+api/menu/restaurant_pk - restaurant specific menu details
+api/orders/ - send user orders
 
-
-
-
+"""
 
 urlpatterns = [
+
     path('is_authenticated/',IsAuthenticatedView.as_view(),name="authenticated"),
     path('csrf/',GetCSRFToken.as_view(),name="csrf_token"),
     path('register/', RestaurantUserCreationView.as_view(),name='restaurant_user_creation'),
-    path('restaurantuser/',RestaurantUserDetailView.as_view(), name='restaurant_user_detail'), # we are filtering aganist the request.user
+    path('restaurantuser/',RestaurantUserDetailView.as_view(), name='restaurant_user_detail'),
     
     path('restaurants/', RestaurantListView.as_view(),name='restaurant_list'),
     path('restaurants/<int:pk>/', RestaurantDetailView.as_view(),name='restaurant_detail'),
@@ -39,8 +43,6 @@ urlpatterns = [
     path('menu/<int:restaurant_pk>/',MenuListView.as_view(),name='menu_list'),
     path('orders/', UserOrdersView.as_view(), name = 'order_list'),
 
-    
-
     # For staff
     path('staff_login/',StaffLoginView.as_view(),name='staff_login'),
     path('staff_is_authenticated/',StaffIsAuthenticatedView.as_view(),name="authenticated"),
@@ -52,12 +54,21 @@ urlpatterns = [
     path('process_bills/<uuid:order_id>/', ProcessBillsView.as_view(), name='process_bills')
 
 
-    #path('api-token-auth/', obtain_auth_token),
-    #path('restaurant_menu/', RestaurantMenus.as_view())
-    #path('', include(router.urls)),
-    #path('auth/', CustomAuthToken.as_view(), name='auth'),
-
 ]
+
+    
+"""
+    URLS for accessing the Api for the Staffs (to be used in React Frontend)
+    api/staff_login/ - login a staff
+    api/staff_is_authenticated/ - to check if the staff is authenticated or not
+    api/update/menu/ - update the restaurant specific menu by the staff
+    api/update/menu/pk/ - update the menu datails
+    api/process/orders/ - api to get orders list
+    api/process/orders/uuid/ - get the order details
+    api/bills_list/ - get the bills list
+    api/process_bills/order_id/ - process bills
+
+"""
 
 
 urlpatterns = format_suffix_patterns(urlpatterns)
